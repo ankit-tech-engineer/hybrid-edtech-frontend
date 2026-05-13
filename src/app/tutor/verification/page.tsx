@@ -260,7 +260,7 @@ export default function VerificationPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="id_type">ID Type</Label>
-                    <Select value={formData.id_type || ''} onValueChange={(val) => setFormData({ ...formData, id_type: val })}>
+                    <Select value={formData.id_type || ''} onValueChange={(val) => setFormData({ ...formData, id_type: val || '' })}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
