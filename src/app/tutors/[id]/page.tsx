@@ -35,7 +35,7 @@ export default function TutorDetailPage() {
     mode: 'ONLINE' as 'ONLINE' | 'OFFLINE',
     note: '',
   });
-
+console.log("tutor",tutor)
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -69,10 +69,15 @@ export default function TutorDetailPage() {
       return;
     }
 
+    if (!tutor?.user_id?._id) {
+      toast.error('Tutor profile not fully loaded. Please try again.');
+      return;
+    }
+
     setBookingLoading(true);
     try {
       const response = await bookingService.createBooking({
-        tutor_id: id as string,
+        tutor_id: tutor.user_id._id,
         mode: bookingData.mode,
         date_time: `${bookingData.date}T${bookingData.time}:00.000Z`,
         note: bookingData.note,

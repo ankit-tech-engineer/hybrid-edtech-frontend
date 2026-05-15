@@ -50,7 +50,8 @@ export default function TutorBookingsPage() {
     switch (status) {
       case 'PENDING': return <Badge className="bg-yellow-100 text-yellow-700 border-none">Pending</Badge>;
       case 'ACCEPTED': return <Badge className="bg-blue-100 text-blue-700 border-none">Accepted</Badge>;
-      case 'COMPLETED': return <Badge className="bg-green-100 text-green-700 border-none">Completed</Badge>;
+      case 'CONFIRMED': return <Badge className="bg-green-100 text-green-700 border-none font-bold">Confirmed</Badge>;
+      case 'COMPLETED': return <Badge className="bg-emerald-100 text-emerald-700 border-none">Completed</Badge>;
       case 'CANCELLED': return <Badge className="bg-red-100 text-red-700 border-none">Cancelled</Badge>;
       case 'REJECTED': return <Badge className="bg-gray-100 text-gray-700 border-none">Rejected</Badge>;
       default: return <Badge>{status}</Badge>;
@@ -120,7 +121,7 @@ export default function TutorBookingsPage() {
                             <Button size="sm" onClick={() => handleStatusUpdate(booking._id, 'ACCEPTED')}>Accept</Button>
                           </>
                         )}
-                        {booking.status === 'ACCEPTED' && (
+                        {(booking.status === 'ACCEPTED' || booking.status === 'CONFIRMED') && (
                           <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleStatusUpdate(booking._id, 'COMPLETED')}>Mark Completed</Button>
                         )}
                         {['COMPLETED', 'CANCELLED', 'REJECTED'].includes(booking.status) && (

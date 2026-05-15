@@ -5,9 +5,10 @@ import { User, Role } from '@/types';
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null;
   isAuthenticated: boolean;
   role: Role | null;
-  setAuth: (user: User, token: string) => void;
+  setAuth: (user: User, token: string, refreshToken: string) => void;
   logout: () => void;
   updateUser: (user: Partial<User>) => void;
 }
@@ -17,18 +18,21 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
       role: null,
-      setAuth: (user, token) => {
-        set({ user, token, isAuthenticated: true, role: user.role });
+      setAuth: (user, token, refreshToken) => {
+        set({ user, token, refreshToken, isAuthenticated: true, role: user.role });
         if (typeof window !== 'undefined') {
           localStorage.setItem('token', token);
+          localStorage.setItem('refreshToken', refreshToken);
         }
       },
       logout: () => {
-        set({ user: null, token: null, isAuthenticated: false, role: null });
+        set({ user: null, token: null, refreshToken: null, isAuthenticated: false, role: null });
         if (typeof window !== 'undefined') {
           localStorage.removeItem('token');
+          localStorage.removeItem('refreshToken');
         }
       },
       updateUser: (userData) => {
@@ -40,7 +44,6 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'auth-storage',
-      // Store only token in localStorage if you want, or everything
     }
   )
 );

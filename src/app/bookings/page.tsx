@@ -11,10 +11,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
-import { Calendar, Clock, MapPin, Star, MessageSquare, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { Calendar, Clock, MapPin, Star, MessageSquare, XCircle, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { useLoadingStore } from '@/store/useLoadingStore';
+
+import { PaymentButton } from '@/components/payments/PaymentButton';
+import { PaymentDetails } from '@/components/payments/PaymentDetails';
 
 export default function StudentBookingsPage() {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -91,15 +94,25 @@ export default function StudentBookingsPage() {
     switch (status) {
       case 'PENDING': return 'bg-yellow-100 text-yellow-700';
       case 'ACCEPTED': return 'bg-blue-100 text-blue-700';
-      case 'COMPLETED': return 'bg-green-100 text-green-700';
+      case 'CONFIRMED': return 'bg-green-100 text-green-700';
+      case 'COMPLETED': return 'bg-emerald-100 text-emerald-700';
       case 'CANCELLED': return 'bg-red-100 text-red-700';
       case 'REJECTED': return 'bg-gray-100 text-gray-700';
       default: return 'bg-gray-100 text-gray-700';
     }
   };
 
+  const getPaymentStatusColor = (status?: string) => {
+    switch (status) {
+      case 'PAID': return 'bg-green-100 text-green-700';
+      case 'FAILED': return 'bg-red-100 text-red-700';
+      case 'REFUNDED': return 'bg-gray-100 text-gray-700';
+      default: return 'bg-yellow-100 text-yellow-700';
+    }
+  };
+
   const filteredBookings = (status: string) => {
-    if (status === 'upcoming') return bookings.filter(b => ['PENDING', 'ACCEPTED'].includes(b.status));
+    if (status === 'upcoming') return bookings.filter(b => ['PENDING', 'ACCEPTED', 'CONFIRMED'].includes(b.status));
     if (status === 'past') return bookings.filter(b => ['COMPLETED', 'CANCELLED', 'REJECTED'].includes(b.status));
     return bookings;
   };
@@ -111,7 +124,7 @@ export default function StudentBookingsPage() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h1 className="text-3xl font-bold">My Bookings</h1>
-          <p className="text-muted-foreground">Manage your learning sessions</p>
+          <p className="text-muted-foreground">Manage your learning sessions and payments</p>
         </div>
       </div>
 
@@ -132,7 +145,7 @@ export default function StudentBookingsPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {filteredBookings(status).map(booking => (
-                  <Card key={booking._id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                  <Card key={booking._id} className="overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col">
                     <CardHeader className="flex flex-row justify-between items-start border-b bg-muted/10 p-6">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
@@ -146,7 +159,7 @@ export default function StudentBookingsPage() {
                         <p className="text-sm text-muted-foreground">{format(new Date(booking.date_time), 'hh:mm a')}</p>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-6 space-y-4">
+                    <CardContent className="p-6 space-y-4 flex-1">
                       <div className="flex flex-wrap gap-4 text-sm">
                         <div className="flex items-center gap-1">
                           <MapPin className="h-4 w-4 text-primary" />
@@ -157,32 +170,56 @@ export default function StudentBookingsPage() {
                           <span className="truncate max-w-[200px]">{booking.note || 'No notes'}</span>
                         </div>
                       </div>
+
+                      {booking.payment_status && (
+                        <div className="flex items-center gap-2 pt-2">
+                          <span className="text-sm text-muted-foreground">Payment:</span>
+                          <Badge className={`${getPaymentStatusColor(booking.payment_status)} border-none`}>
+                            {booking.payment_status}
+                          </Badge>
+                        </div>
+                      )}
+
+                      {booking.payment_status === 'PAID' && (
+                        <PaymentDetails bookingId={booking._id} />
+                      )}
                     </CardContent>
-                    <CardFooter className="px-6 py-4 bg-muted/5 flex gap-2">
-                      {booking.status === 'ACCEPTED' && (
-                         <Button variant="outline" className="flex-1" onClick={() => {
-                           setSelectedBooking(booking);
-                           setCancelOpen(true);
-                         }}>
-                           <XCircle className="h-4 w-4 mr-2" /> Cancel
-                         </Button>
-                      )}
-                      {booking.status === 'COMPLETED' && (
-                        <Button className="flex-1" onClick={() => {
-                          setSelectedBooking(booking);
-                          setReviewOpen(true);
-                        }}>
-                          <Star className="h-4 w-4 mr-2" /> Review Tutor
-                        </Button>
-                      )}
-                      {booking.status === 'PENDING' && (
-                        <Button variant="outline" className="flex-1 text-destructive hover:text-destructive" onClick={() => {
-                          setSelectedBooking(booking);
-                          setCancelOpen(true);
-                        }}>
-                          Cancel Request
-                        </Button>
-                      )}
+                    <CardFooter className="px-6 py-4 bg-muted/5 flex flex-col gap-2">
+                      <div className="flex w-full gap-2">
+                        {booking.status === 'ACCEPTED' && booking.payment_status !== 'PAID' && (
+                          <div className="flex-1">
+                            <PaymentButton 
+                              bookingId={booking._id} 
+                              amount={booking.amount || 0} 
+                              onSuccess={fetchBookings}
+                            />
+                          </div>
+                        )}
+                        
+                        {(booking.status === 'ACCEPTED' || booking.status === 'PENDING') && (
+                           <Button variant="outline" className={booking.status === 'ACCEPTED' && booking.payment_status !== 'PAID' ? 'w-24' : 'flex-1'} onClick={() => {
+                             setSelectedBooking(booking);
+                             setCancelOpen(true);
+                           }}>
+                             {booking.status === 'ACCEPTED' ? 'Cancel' : 'Cancel Request'}
+                           </Button>
+                        )}
+
+                        {booking.status === 'CONFIRMED' && (
+                          <div className="flex-1 py-2 text-center bg-green-50 text-green-700 rounded-lg text-sm font-bold flex items-center justify-center gap-2">
+                            <CheckCircle2 className="h-4 w-4" /> Booking Confirmed
+                          </div>
+                        )}
+                        
+                        {booking.status === 'COMPLETED' && (
+                          <Button className="flex-1" onClick={() => {
+                            setSelectedBooking(booking);
+                            setReviewOpen(true);
+                          }}>
+                            <Star className="h-4 w-4 mr-2" /> Review Tutor
+                          </Button>
+                        )}
+                      </div>
                     </CardFooter>
                   </Card>
                 ))}

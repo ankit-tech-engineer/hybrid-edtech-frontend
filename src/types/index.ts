@@ -48,18 +48,51 @@ export interface AvailabilitySlot {
   end_time: string; // HH:mm
 }
 
+export type PaymentStatus = 'CREATED' | 'PAID' | 'FAILED' | 'REFUNDED';
+export type BookingStatus = 'PENDING' | 'ACCEPTED' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'REJECTED';
+
 export interface Booking {
   _id: string;
   student_id: string;
   tutor_id: string;
   mode: 'ONLINE' | 'OFFLINE';
   date_time: string;
-  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'COMPLETED' | 'CANCELLED';
+  status: BookingStatus;
   note?: string;
   cancel_reason?: string;
   tutor?: TutorProfile;
   student?: User;
+  payment_status?: PaymentStatus;
+  amount?: number;
   createdAt: string;
+}
+
+export interface Payment {
+  _id: string;
+  booking_id: string;
+  amount: number;
+  currency: string;
+  status: PaymentStatus;
+  razorpay_order_id: string;
+  razorpay_payment_id?: string;
+  razorpay_signature?: string;
+  createdAt: string;
+}
+
+export interface RazorpayOrderData {
+  order_id: string;
+  amount: number;
+  currency: string;
+  key_id: string;
+  booking_id: string;
+  tutor_price: number;
+  platform_fee: number;
+}
+
+export interface RazorpayResponse {
+  razorpay_order_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
 }
 
 export interface Review {

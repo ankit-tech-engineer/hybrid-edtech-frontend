@@ -40,13 +40,16 @@ export default function LoginPage() {
     try {
       const response = await authService.login(data);
       if (response.success) {
-        // API only returns token and role, so store token temporarily to fetch user
-        localStorage.setItem('token', response.data.token);
+        const { accessToken, refreshToken } = response.data;
+        // Store accessToken temporarily to fetch user
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('token', accessToken);
+        }
         
         try {
           const meResponse = await authService.getMe();
           if (meResponse.success) {
-            setAuth(meResponse.data, response.data.token);
+            setAuth(meResponse.data, accessToken, refreshToken);
             toast.success('Login successful!');
             
             // Redirect based on role
@@ -55,7 +58,9 @@ export default function LoginPage() {
             else router.push('/');
           }
         } catch (meError: any) {
-          localStorage.removeItem('token');
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('token');
+          }
           toast.error(meError?.message || (typeof meError === 'string' ? meError : null) || 'Failed to fetch user profile after login.');
         }
       }

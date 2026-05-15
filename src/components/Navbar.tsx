@@ -6,17 +6,25 @@ import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { GraduationCap, LogOut, User, LayoutDashboard, Calendar, Search } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { authService } from '@/services/auth.service';
 
 export function Navbar() {
   const [mounted, setMounted] = useState(false);
-  const { user, isAuthenticated, logout, role } = useAuthStore();
+  const { user, isAuthenticated, logout, role, refreshToken } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (refreshToken) {
+      try {
+        await authService.logout(refreshToken);
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    }
     logout();
     router.push('/login');
   };

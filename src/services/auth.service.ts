@@ -12,8 +12,23 @@ export const authService = {
     api.post<any, ApiResponse<null>>('/auth/set-password', data),
 
   login: (data: { email: string; password: string }) =>
-    api.post<any, ApiResponse<{ token: string; role: Role }>>('/auth/login', data),
+    api.post<any, ApiResponse<{ accessToken: string; refreshToken: string; role: Role }>>('/auth/login', data),
+
+  logout: (refreshToken: string) =>
+    api.post<any, ApiResponse<{ logged_out: boolean }>>('/auth/logout', { refresh_token: refreshToken }),
+
+  refreshToken: (refreshToken: string) =>
+    api.post<any, ApiResponse<{ accessToken: string }>>('/auth/refresh-token', { refresh_token: refreshToken }),
 
   getMe: () =>
     api.get<any, ApiResponse<User>>('/auth/me'),
+
+  forgotPassword: (email: string) =>
+    api.post<any, ApiResponse<null>>('/auth/forgot-password', { email }),
+
+  resetPassword: (data: { email: string; otp: string; new_password: string }) =>
+    api.post<any, ApiResponse<null>>('/auth/reset-password', data),
+
+  resendOtp: (data: { email: string; type: 'REGISTER' | 'LOGIN' | 'FORGOT_PASSWORD' }) =>
+    api.post<any, ApiResponse<null>>('/auth/resend-otp', data),
 };
